@@ -7,11 +7,22 @@ esphome:
           level: INFO
           format: "BOOT LOG"
 
+image:
+  - file: "avatar_144.png"
+    id: channel_avatar_img
+    type: rgb565
+    transparency: alpha_channel
+    resize: 96x96
+
 globals:
-  - id: click_counter
-    type: int
+  - id: subscribed
+    type: bool
     restore_value: no
-    initial_value: "0"
+    initial_value: "false"
+  - id: notifications_enabled
+    type: bool
+    restore_value: no
+    initial_value: "false"
 
 logger:
   level: DEBUG
@@ -88,7 +99,7 @@ output:
     inverted: true
     frequency: 1000Hz
 
-light: # wthats that???
+light:
   - platform: monochromatic
     output: gpio_backlight_pwm
     name: Display Backlight
@@ -122,57 +133,122 @@ lvgl:
         y: 0
         width: 1024
         height: 600
-        bg_color: 0xFF0000
+        bg_color: 0x0F0F0F
         bg_opa: COVER
         border_width: 0
         radius: 0
 
-    # Test texts
-    - label:
-        x: 10
-        y: 10
-        text: "Display OK"
-        text_color: 0xFFFFFF
-        text_font: montserrat_20
-    - label:
-        id: counter_label
-        y: -80
+    - obj:
+        id: subscribe
         align: CENTER
-        text: "Clicks: 0"
-        text_color: 0xFFFFFF
-        text_font: montserrat_32
+        scrollable: false
+        width: 800
+        height: 128
+        bg_opa: TRANSP
+        border_width: 0
+        radius: 0
+        widgets:
+          - image:
+              id: avatar
+              x: 0
+              y: 0
+              width: 96
+              height: 96
+              radius: 48
+              src: channel_avatar_img
+              clip_corner: true
 
-    # Button
-    - button:
-        id: test_button
-        align: CENTER
-        y: 160
-        x: 160
-        width: 200
-        height: 90
-        text: "Click me"
-        bg_color: 0x00AA44
-        bg_opa: COVER
-        radius: 16
-        on_click:
-          then:
-            - lambda: |-
-                id(click_counter) += 1;
-            - logger.log:
-                level: INFO
-                format: "Click, counter value: %d"
-                args: ["id(click_counter)"]
-            - lvgl.label.update:
-                id: counter_label
-                text:
-                  format: "Clicks: %d"
-                  args: ["id(click_counter)"]
-    - bar:
-        id: test_bar
-        align: CENTER
-        y: 160
-        x: -260
-        width: 400
-        value: 50
-        min_value: 1
-        max_value: 100
+          - button:
+              id: sub_btn
+              x: 160
+              y: 0
+              width: 360
+              height: 96
+              bg_color: 0xFF0000
+              bg_opa: COVER
+              border_width: 0
+              radius: 48
+              shadow_width: 0
+              widgets:
+                - label:
+                    id: sub_btn_label
+                    align: CENTER
+                    text: "Subscribe"
+                    text_color: 0xFFFFFF
+                    text_font: montserrat_48
+              on_click:
+                then:
+                  - lambda: |-
+                      id(subscribed) = !id(subscribed);
+
+                      if (!id(subscribed)) {
+                        id(notifications_enabled) = false;
+                      }
+                  - if:
+                      condition:
+                        lambda: return id(subscribed);
+                      then:
+                        - lvgl.button.update:
+                            id: sub_btn
+                            bg_color: 0x272727
+                            text_color: 0xF1F1F1
+                        - lvgl.label.update:
+                            id: sub_btn_label
+                            text: "Subscribed"
+                            bg_color: 0x272727
+                            text_color: 0xF1F1F1
+
+                        - lvgl.widget.update:
+                            id: notifications_btn
+                            hidden: false
+
+          - button:
+              id: notifications_btn
+              x: 584
+              y: 0
+              width: 96
+              height: 96
+              bg_color: 0xF1F1F1
+              bg_opa: COVER
+              border_width: 0
+              radius: 48
+              hidden: true
+              shadow_width: 0
+              widgets:
+                - label:
+                    id: notifications_icon
+                    align: CENTER
+                    text: "\uF0F3"
+                    text_color: 0x272727
+                    bg_color: 0xF1F1F1
+                    text_font: montserrat_48
+
+              on_click:
+                then:
+                  - if:
+                      condition:
+                        lambda: return id(subscribed);
+                      then:
+                        - lambda: id(notifications_enabled) = !id(notifications_enabled);
+                        - if:
+                            condition:
+                              lambda: return id(notifications_enabled);
+                            then:
+                              - lvgl.widget.update:
+                                  id: notifications_btn
+                                  bg_color: 0x272727
+                                  text_color: 0xF1F1F1
+
+                              - lvgl.label.update:
+                                  id: notifications_icon
+                                  text_color: 0xF1F1F1
+
+                            else:
+                              - lvgl.widget.update:
+                                  id: notifications_btn
+                                  bg_color: 0x272727
+                                  border_color: 0x3F3F3F
+
+                              - lvgl.label.update:
+                                  id: notifications_icon
+                                  text_color: 0xF1F1F1
