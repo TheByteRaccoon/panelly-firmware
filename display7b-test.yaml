@@ -1,0 +1,178 @@
+esphome:
+  name: 7b-test
+  on_boot:
+    priority: -100
+    then:
+      - logger.log:
+          level: INFO
+          format: "BOOT LOG"
+
+globals:
+  - id: click_counter
+    type: int
+    restore_value: no
+    initial_value: "0"
+
+logger:
+  level: DEBUG
+  hardware_uart: UART0
+  baud_rate: 115200
+
+esp32:
+  variant: esp32p4
+  engineering_sample: true
+  flash_size: 32MB
+  cpu_frequency: 360MHz
+  framework:
+    type: esp-idf
+
+psram:
+  mode: hex
+  speed: 200MHz
+
+preferences:
+  flash_write_interval: 5min
+
+esp_ldo:
+  - voltage: 2.5V
+    channel: 3
+
+# Comms chip
+esp32_hosted:
+  variant: ESP32C6
+  reset_pin: GPIO54
+  cmd_pin: GPIO19
+  clk_pin: GPIO18
+  d0_pin: GPIO14
+  d1_pin: GPIO15
+  d2_pin: GPIO16
+  d3_pin: GPIO17
+  active_high: true
+
+# wifi:
+#   ssid: "dummyssid"
+#   password: "njnjnjn00000111"
+
+#   # Enable fallback hotspot (captive portal) in case wifi connection fails
+#   ap:
+#     ssid: "7B-Test Fallback Hotspot"
+#     password: "aaa123456"
+
+# -------------------------------------------
+# Touchscreen gt911 i2c
+# -------------------------------------------
+i2c:
+  - id: bus_a
+    sda: GPIO07
+    scl: GPIO08
+    frequency: 400kHz
+
+touchscreen:
+  - platform: gt911
+    id: embedded_touch
+    i2c_id: bus_a
+    reset_pin: GPIO23
+    update_interval: 50ms
+    transform:
+      swap_xy: false
+      mirror_x: true
+      mirror_y: true
+
+# -------------------------------------------
+# Backlight
+# -------------------------------------------
+output:
+  - platform: ledc
+    id: gpio_backlight_pwm
+    pin: GPIO32
+    inverted: true
+    frequency: 1000Hz
+
+light: # wthats that???
+  - platform: monochromatic
+    output: gpio_backlight_pwm
+    name: Display Backlight
+    icon: mdi:lightbulb-on
+    id: display_backlight
+    restore_mode: ALWAYS_ON
+    default_transition_length: 250ms
+
+# -------------------------------------------
+# Display
+# -------------------------------------------
+display:
+  - platform: mipi_dsi
+    id: embedded_display
+    model: WAVESHARE-ESP32-P4-WIFI6-TOUCH-LCD-7B
+    update_interval: never
+    auto_clear_enabled: false
+
+# LVGL settings required for this display
+lvgl:
+  buffer_size: 100 %
+  byte_order: little_endian
+  rotation: 180
+  touchscreens:
+    - touchscreen_id: embedded_touch
+
+  widgets:
+    # Background
+    - obj:
+        x: 0
+        y: 0
+        width: 1024
+        height: 600
+        bg_color: 0xFF0000
+        bg_opa: COVER
+        border_width: 0
+        radius: 0
+
+    # Test texts
+    - label:
+        x: 10
+        y: 10
+        text: "Display OK"
+        text_color: 0xFFFFFF
+        text_font: montserrat_20
+    - label:
+        id: counter_label
+        y: -80
+        align: CENTER
+        text: "Clicks: 0"
+        text_color: 0xFFFFFF
+        text_font: montserrat_32
+
+    # Button
+    - button:
+        id: test_button
+        align: CENTER
+        y: 160
+        x: 160
+        width: 200
+        height: 90
+        text: "Click me"
+        bg_color: 0x00AA44
+        bg_opa: COVER
+        radius: 16
+        on_click:
+          then:
+            - lambda: |-
+                id(click_counter) += 1;
+            - logger.log:
+                level: INFO
+                format: "Click, counter value: %d"
+                args: ["id(click_counter)"]
+            - lvgl.label.update:
+                id: counter_label
+                text:
+                  format: "Clicks: %d"
+                  args: ["id(click_counter)"]
+    - bar:
+        id: test_bar
+        align: CENTER
+        y: 160
+        x: -260
+        width: 400
+        value: 50
+        min_value: 1
+        max_value: 100
