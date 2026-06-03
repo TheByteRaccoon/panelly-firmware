@@ -8,7 +8,7 @@ esphome:
           format: "BOOT LOG"
 
 image:
-  - file: "avatar_144.png"
+  - file: "graphics/avatar_144.png"
     id: channel_avatar_img
     type: rgb565
     transparency: alpha_channel
@@ -159,52 +159,9 @@ lvgl:
               clip_corner: true
 
           - button:
-              id: sub_btn
-              x: 160
-              y: 0
-              width: 360
-              height: 96
-              bg_color: 0xFF0000
-              bg_opa: COVER
-              border_width: 0
-              radius: 48
-              shadow_width: 0
-              widgets:
-                - label:
-                    id: sub_btn_label
-                    align: CENTER
-                    text: "Subscribe"
-                    text_color: 0xFFFFFF
-                    text_font: montserrat_48
-              on_click:
-                then:
-                  - lambda: |-
-                      id(subscribed) = !id(subscribed);
-
-                      if (!id(subscribed)) {
-                        id(notifications_enabled) = false;
-                      }
-                  - if:
-                      condition:
-                        lambda: return id(subscribed);
-                      then:
-                        - lvgl.button.update:
-                            id: sub_btn
-                            bg_color: 0x272727
-                            text_color: 0xF1F1F1
-                        - lvgl.label.update:
-                            id: sub_btn_label
-                            text: "Subscribed"
-                            bg_color: 0x272727
-                            text_color: 0xF1F1F1
-
-                        - lvgl.widget.update:
-                            id: notifications_btn
-                            hidden: false
-
-          - button:
               id: notifications_btn
-              x: 584
+              # x: 584 # animate to
+              x: 424
               y: 0
               width: 96
               height: 96
@@ -252,3 +209,57 @@ lvgl:
                               - lvgl.label.update:
                                   id: notifications_icon
                                   text_color: 0xF1F1F1
+
+          - button:
+              id: sub_btn
+              x: 160
+              y: 0
+              width: 360
+              height: 96
+              bg_color: 0xFF0000
+              bg_opa: COVER
+              border_width: 0
+              radius: 48
+              shadow_width: 0
+              widgets:
+                - label:
+                    id: sub_btn_label
+                    align: CENTER
+                    text: "Subscribe"
+                    text_color: 0xFFFFFF
+                    text_font: montserrat_48
+              on_click:
+                then:
+                  - lambda: |-
+                      id(subscribed) = !id(subscribed);
+
+                      if (!id(subscribed)) {
+                        id(notifications_enabled) = false;
+                      }
+                  - if:
+                      condition:
+                        lambda: return id(subscribed);
+                      then:
+                        - lvgl.button.update:
+                            id: sub_btn
+                            bg_color: 0x272727
+                            text_color: 0xF1F1F1
+                        - lvgl.label.update:
+                            id: sub_btn_label
+                            text: "Subscribed"
+                            bg_color: 0x272727
+                            text_color: 0xF1F1F1
+
+                        - lvgl.widget.show:
+                            id: notifications_btn
+                        - lambda: |-
+                            lv_anim_t a;
+                            lv_anim_init(&a);
+                            lv_anim_set_var(&a, id(notifications_btn));
+                            lv_anim_set_values(&a, 424, 584);
+                            lv_anim_set_duration(&a, 300);
+                            lv_anim_set_path_cb(&a, lv_anim_path_ease_out);
+                            lv_anim_set_exec_cb(&a, [](void * obj, int32_t v) {
+                              lv_obj_set_x((lv_obj_t *) obj, v);
+                            });
+                            lv_anim_start(&a);
