@@ -1,5 +1,7 @@
 esphome:
   name: 7b-test
+  includes:
+    - custom/panelly_helpers.h
   on_boot:
     priority: -100
     then:
@@ -9,7 +11,7 @@ esphome:
 
 globals:
   - id: click_counter
-    type: int
+    type: int16_t
     restore_value: no
     initial_value: "0"
 
@@ -144,20 +146,25 @@ lvgl:
 
     # Button
     - button:
-        id: test_button
+        id: inc_btn
         align: CENTER
         y: 160
-        x: 160
-        width: 200
+        x: 140
+        width: 150
         height: 90
-        text: "Click me"
         bg_color: 0x00AA44
         bg_opa: COVER
         radius: 16
+        widgets:
+          - label:
+              id: inc_btn_lbl
+              align: CENTER
+              text: "Increment++"
+              text_font: montserrat_20
         on_click:
           then:
             - lambda: |-
-                id(click_counter) += 1;
+                id(click_counter) = panelly::increment_click(id(click_counter));
             - logger.log:
                 level: INFO
                 format: "Click, counter value: %d"
@@ -167,12 +174,51 @@ lvgl:
                 text:
                   format: "Clicks: %d"
                   args: ["id(click_counter)"]
+            - lvgl.bar.update:
+                id: test_bar
+                value: !lambda |-
+                  return id(click_counter);
+    - button:
+        id: dec_btn
+        align: CENTER
+        y: 160
+        x: 320
+        width: 150
+        height: 90
+        bg_color: 0x00AA44
+        bg_opa: COVER
+        radius: 16
+        widgets:
+          - label:
+              id: dec_btn_lbl
+              align: CENTER
+              text: "Decrement--"
+              text_font: montserrat_20
+        on_click:
+          then:
+            - lambda: |-
+                id(click_counter) = panelly::decrement_click(id(click_counter));
+            - logger.log:
+                level: INFO
+                format: "Click, counter value: %d"
+                args: ["id(click_counter)"]
+            - lvgl.label.update:
+                id: counter_label
+                text:
+                  format: "Clicks: %d"
+                  args: ["id(click_counter)"]
+            - lvgl.bar.update:
+                id: test_bar
+                value: !lambda |-
+                  return id(click_counter);
     - bar:
         id: test_bar
         align: CENTER
         y: 160
         x: -260
         width: 400
-        value: 50
-        min_value: 1
-        max_value: 100
+        value: 0
+        min_value: !lambda |-
+          return panelly::MIN_COUNT;
+        max_value: !lambda |-
+          return panelly::MAX_COUNT;
