@@ -1,0 +1,50 @@
+substitutions:
+  # Neutral / surfaces
+  tw_slate_200: "0xE2E8F0"
+  tw_slate_400: "0x94A3B8"
+  tw_slate_600: "0x475569"
+  tw_slate_800: "0x1E293B"
+  tw_slate_900: "0x0F172A"
+  tw_slate_950: "0x020617"
+
+  # Red / danger
+  tw_red_200: "0xFECACA"
+  tw_red_400: "0xF87171"
+  tw_red_600: "0xDC2626"
+  tw_red_800: "0x991B1B"
+
+  # Amber / warning
+  tw_amber_200: "0xFDE68A"
+  tw_amber_400: "0xFBBF24"
+  tw_amber_600: "0xD97706"
+  tw_amber_800: "0x92400E"
+
+  # Green / success
+  tw_green_200: "0xBBF7D0"
+  tw_green_400: "0x4ADE80"
+  tw_green_600: "0x16A34A"
+  tw_green_800: "0x166534"
+
+  # Cyan / info
+  tw_cyan_200: "0xA5F3FC"
+  tw_cyan_400: "0x22D3EE"
+  tw_cyan_600: "0x0891B2"
+  tw_cyan_800: "0x155E75"
+
+  # Blue / primary
+  tw_blue_200: "0xBFDBFE"
+  tw_blue_400: "0x60A5FA"
+  tw_blue_600: "0x2563EB"
+  tw_blue_800: "0x1E40AF"
+
+  # Violet / secondary accent
+  tw_violet_200: "0xDDD6FE"
+  tw_violet_400: "0xA78BFA"
+  tw_violet_600: "0x7C3AED"
+  tw_violet_800: "0x5B21B6"
+
+  # Pink / optional warm accent
+  tw_pink_200: "0xFBCFE8"
+  tw_pink_400: "0xF472B6"
+  tw_pink_600: "0xDB2777"
+  tw_pink_800: "0x9D174D"

@@ -6,8 +6,22 @@ esphome:
     priority: -100
     then:
       - logger.log:
-          level: INFO
+          level: DEBUG
           format: "BOOT LOG"
+
+packages:
+  colors: !include colors.yaml
+  theme: !include theme.yaml
+
+api:
+  reboot_timeout: 600s
+  on_client_connected:
+    then:
+      - script.execute: update_api_state_label
+      - script.execute: update_entrance_light_button
+  on_client_disconnected:
+    then:
+      - script.execute: update_api_state_label
 
 globals:
   - id: click_counter
@@ -51,14 +65,77 @@ esp32_hosted:
   d3_pin: GPIO17
   active_high: true
 
-# wifi:
-#   ssid: "dummyssid"
-#   password: "njnjnjn00000111"
+wifi:
+  networks:
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
+      hidden: true
+  on_connect:
+    then:
+      - lvgl.label.update:
+          id: wifi_state_label
+          text: "WIFI: connected"
+  on_disconnect:
+    then:
+      - lvgl.label.update:
+          id: wifi_state_label
+          text: "WIFI: disconnected"
 
 #   # Enable fallback hotspot (captive portal) in case wifi connection fails
 #   ap:
 #     ssid: "7B-Test Fallback Hotspot"
 #     password: "aaa123456"
+
+script:
+  - id: update_entrance_light_button
+    then:
+      - if:
+          condition:
+            binary_sensor.is_on: lights_entrance
+          then:
+            - lvgl.label.update:
+                id: entrance_light_toggle_lbl
+                text: Toggle off
+            - lvgl.button.update:
+                id: entrance_light_toggle
+                bg_color: ${button_light_on_bg}
+          else:
+            - lvgl.label.update:
+                id: entrance_light_toggle_lbl
+                text: Toggle on
+            - lvgl.button.update:
+                id: entrance_light_toggle
+                bg_color: ${button_default_bg}
+
+  - id: update_api_state_label
+    mode: restart
+    then:
+      - delay: 1000ms
+      - if:
+          condition:
+            api.connected:
+              state_subscription_only: true
+          then:
+            - lvgl.label.update:
+                id: api_state_label
+                text: "API: connected"
+          else:
+            - lvgl.label.update:
+                id: api_state_label
+                text: "API: disconnected"
+
+binary_sensor:
+  - platform: homeassistant
+    id: lights_entrance
+    entity_id: light.lights_entrance
+    trigger_on_initial_state: true
+    on_state:
+      then:
+        # - logger.log:
+        #     level: DEBUG
+        #     format: "lights_entrance state from HA: %s"
+        #     args: ['id(lights_entrance).state ? "ON" : "OFF"']
+        - script.execute: update_entrance_light_button
 
 # -------------------------------------------
 # Touchscreen gt911 i2c
@@ -117,6 +194,10 @@ lvgl:
   touchscreens:
     - touchscreen_id: embedded_touch
 
+  on_boot:
+    then:
+      - script.execute: update_api_state_label
+
   widgets:
     # Background
     - obj:
@@ -124,83 +205,70 @@ lvgl:
         y: 0
         width: 1024
         height: 600
-        bg_color: 0xFF0000
+        bg_color: ${theme_bg}
         bg_opa: COVER
         border_width: 0
         radius: 0
 
-    # Test texts
-    - label:
+    - button:
+        id: entrance_light_toggle
+        align: CENTER
+        y: 0
+        x: -300
+        width: 150
+        height: 90
+        bg_color: ${button_default_bg}
+        bg_opa: COVER
+        radius: 16
+        widgets:
+          - label:
+              id: entrance_light_toggle_lbl
+              align: CENTER
+              text: "Toggle ..."
+              text_font: montserrat_20
+        on_click:
+          then:
+            - if:
+                condition:
+                  binary_sensor.is_on: lights_entrance
+                then:
+                  - homeassistant.action:
+                      action: scene.turn_on
+                      data:
+                        entity_id: scene.lights_entrance_12_off
+                else:
+                  - homeassistant.action:
+                      action: scene.turn_on
+                      data:
+                        entity_id: scene.lights_entrance_11_on
+    # Test labels
+    - obj:
         x: 10
         y: 10
-        text: "Display OK"
-        text_color: 0xFFFFFF
-        text_font: montserrat_20
-    - label:
-        id: counter_label
-        y: -80
-        align: CENTER
-        text: "Clicks: 0"
-        text_color: 0xFFFFFF
-        text_font: montserrat_32
-
-    # Button
-    - button:
-        id: inc_btn
-        align: CENTER
-        y: 160
-        x: 140
-        width: 150
-        height: 90
-        bg_color: 0x00AA44
-        bg_opa: COVER
-        radius: 16
+        width: SIZE_CONTENT
+        height: SIZE_CONTENT
+        bg_opa: TRANSP
+        border_width: 0
+        pad_all: 0
+        layout:
+          type: FLEX
+          pad_column: 32
+          flex_flow: ROW
+          flex_align_main: START
+          flex_align_cross: CENTER
+          flex_align_track: CENTER
         widgets:
           - label:
-              id: inc_btn_lbl
-              align: CENTER
-              text: "Increment++"
+              text: "DISPLAY: ok"
+              text_color: 0xFFFFFF
               text_font: montserrat_20
-        on_click:
-          then:
-            - lambda: |-
-                id(click_counter) = panelly::handle_inc_click(
-                  id(counter_label),
-                  id(test_bar),
-                  id(click_counter)
-                );
-    - button:
-        id: dec_btn
-        align: CENTER
-        y: 160
-        x: 320
-        width: 150
-        height: 90
-        bg_color: 0x00AA44
-        bg_opa: COVER
-        radius: 16
-        widgets:
           - label:
-              id: dec_btn_lbl
-              align: CENTER
-              text: "Decrement--"
+              id: wifi_state_label
+              text: "WIFI: disconnected"
+              text_color: 0xFFFFFF
               text_font: montserrat_20
-        on_click:
-          then:
-            - lambda: |-
-                id(click_counter) = panelly::handle_dec_click(
-                  id(counter_label),
-                  id(test_bar),
-                  id(click_counter)
-                );
-    - bar:
-        id: test_bar
-        align: CENTER
-        y: 160
-        x: -260
-        width: 400
-        value: 0
-        min_value: !lambda |-
-          return panelly::MIN_COUNT;
-        max_value: !lambda |-
-          return panelly::MAX_COUNT;
+          - label:
+              id: api_state_label
+              text: "API: disconnected"
+              text_color: 0xFFFFFF
+              text_font: montserrat_20

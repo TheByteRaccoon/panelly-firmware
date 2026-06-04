@@ -1,0 +1,4 @@
+substitutions:
+  theme_bg: ${tw_slate_950}
+  button_default_bg: ${tw_slate_800}
+  button_light_on_bg: ${tw_amber_400}
