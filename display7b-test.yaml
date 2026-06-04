@@ -164,20 +164,11 @@ lvgl:
         on_click:
           then:
             - lambda: |-
-                id(click_counter) = panelly::increment_click(id(click_counter));
-            - logger.log:
-                level: INFO
-                format: "Click, counter value: %d"
-                args: ["id(click_counter)"]
-            - lvgl.label.update:
-                id: counter_label
-                text:
-                  format: "Clicks: %d"
-                  args: ["id(click_counter)"]
-            - lvgl.bar.update:
-                id: test_bar
-                value: !lambda |-
-                  return id(click_counter);
+                id(click_counter) = panelly::handle_inc_click(
+                  id(counter_label),
+                  id(test_bar),
+                  id(click_counter)
+                );
     - button:
         id: dec_btn
         align: CENTER
@@ -197,20 +188,11 @@ lvgl:
         on_click:
           then:
             - lambda: |-
-                id(click_counter) = panelly::decrement_click(id(click_counter));
-            - logger.log:
-                level: INFO
-                format: "Click, counter value: %d"
-                args: ["id(click_counter)"]
-            - lvgl.label.update:
-                id: counter_label
-                text:
-                  format: "Clicks: %d"
-                  args: ["id(click_counter)"]
-            - lvgl.bar.update:
-                id: test_bar
-                value: !lambda |-
-                  return id(click_counter);
+                id(click_counter) = panelly::handle_dec_click(
+                  id(counter_label),
+                  id(test_bar),
+                  id(click_counter)
+                );
     - bar:
         id: test_bar
         align: CENTER
